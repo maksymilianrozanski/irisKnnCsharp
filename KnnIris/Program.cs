@@ -22,32 +22,32 @@ namespace KnnIris
 
             var trainingDataCsv = downloader.DownloadFromUrl(new Uri(trainingDataUrl));
             var validationDataCsv = downloader.DownloadFromUrl(new Uri(validationDataUrl));
-            
+
             var trainingData = trainingDataCsv
                 .Map(Knn.CsvToFeaturesWithLabel).Match(error =>
-            {
-                Console.WriteLine(error.Message);
-                Environment.Exit(1);
-                return new List<FeaturesWithLabel>();
-            }, labels => labels);
-  
+                {
+                    Console.WriteLine(error.Message);
+                    Environment.Exit(1);
+                    return new List<FeaturesWithLabel>();
+                }, labels => labels);
+
             var validationData = validationDataCsv
                 .Map(Knn.CsvToFeaturesWithLabel).Match(error =>
-            {
-                Console.WriteLine(error.Message);
-                Environment.Exit(1);
-                return new List<FeaturesWithLabel>();
-            }, labels => labels).ToList();
-            
+                {
+                    Console.WriteLine(error.Message);
+                    Environment.Exit(1);
+                    return new List<FeaturesWithLabel>();
+                }, labels => labels).ToList();
+
             var knn3 = Knn.Predict.Apply(trainingData).Apply(3);
 
-            validationData.ForEach(it =>
-            {
-                var expected = it.Label;
-                var result = knn3(it.Features);
-                if(expected != result) Console.WriteLine("DIFFERENT!");
-                Console.WriteLine($"(expected - predicted) ({expected} - {result})");
-            });
+            Knn.PredictAll(knn3, validationData)
+                .ForEach(it =>
+                {
+                    var (item1, item2) = it;
+                    if(item1 != item2) Console.Write("DIFFERENT !!! ");
+                    Console.WriteLine($"(expected - predicted) : ({item1} - {item2})");
+                });
 
             Console.WriteLine("End");
         }
@@ -68,6 +68,15 @@ namespace KnnIris
                     .GroupBy(it => it.it.Label)
                     .OrderByDescending(it => it.Count())
                     .Select(it => it.Key).First();
+
+        public static readonly
+            Func<Func<IEnumerable<double>, string>, IEnumerable<FeaturesWithLabel>, IEnumerable<(string, string)>>
+            PredictAll = (predictingFunc, validationData) => validationData.Map(it =>
+            {
+                var expected = it.Label;
+                var predicted = predictingFunc(it.Features);
+                return (expected, predicted);
+            });
 
         public static IEnumerable<FeaturesWithLabel> CsvToFeaturesWithLabel(string csv) =>
             csv.Trim().TrimEnd().Split("\n").Map(ToFeaturesWithLabel);
