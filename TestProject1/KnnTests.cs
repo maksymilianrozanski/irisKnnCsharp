@@ -61,7 +61,7 @@ namespace TestProject1
 
             for (var k = 1; k <= 3; k++)
             {
-                foreach (var result in expectedRed.Select(predicted => Knn.Predict(_trainingData, predicted, k)))
+                foreach (var result in expectedRed.Select(predicted => Knn.Predict(_trainingData, k, predicted)))
                 {
                     Assert.AreEqual(R, result);
                 }
@@ -80,7 +80,7 @@ namespace TestProject1
 
             for (var k = 1; k <= 3; k++)
             {
-                foreach (var result in expectedGreen.Select(predicted => Knn.Predict(_trainingData, predicted, k)))
+                foreach (var result in expectedGreen.Select(predicted => Knn.Predict(_trainingData, k, predicted)))
                 {
                     Assert.AreEqual(G, result);
                 }
