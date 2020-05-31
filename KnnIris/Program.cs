@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Globalization;
 using System.Linq;
 using LaYumba.Functional;
@@ -45,7 +46,7 @@ namespace KnnIris
                 .ForEach(it =>
                 {
                     var (item1, item2) = it;
-                    if(item1 != item2) Console.Write("DIFFERENT !!! ");
+                    if (item1 != item2) Console.Write("DIFFERENT !!! ");
                     Console.WriteLine($"(expected - predicted) : ({item1} - {item2})");
                 });
 
@@ -77,6 +78,30 @@ namespace KnnIris
                 var predicted = predictingFunc(it.Features);
                 return (expected, predicted);
             });
+
+        /// <summary>
+        /// Aggregates results of prediction
+        /// </summary>
+        /// <param name="possibleLabels">all possible labels from training dataset</param>
+        /// <param name="expectedAndPredicted">tuple of labels - expected and predicted value</param>
+        /// <returns>outer dictionary key (predicted value) maps to count of actual (true) values</returns>
+        public static ImmutableDictionary<string, ImmutableDictionary<string, int>> PredictionStatistics(
+            List<string> possibleLabels,
+            IEnumerable<(string, string)> expectedAndPredicted)
+        {
+            var seed = possibleLabels
+                .ToImmutableDictionary(k => k, i => ImmutableDictionary.Create<string, int>().AddRange(
+                    possibleLabels.Map(it => KeyValuePair.Create(it, 0))));
+
+            var result = expectedAndPredicted.Aggregate(seed, (acc, tuple)
+                =>
+            {
+                var current = acc[tuple.Item1][tuple.Item2];
+                return acc.SetItem(tuple.Item1, acc[tuple.Item1].SetItem(tuple.Item2, current + 1));
+            });
+
+            return result;
+        }
 
         public static IEnumerable<FeaturesWithLabel> CsvToFeaturesWithLabel(string csv) =>
             csv.Trim().TrimEnd().Split("\n").Map(ToFeaturesWithLabel);
