@@ -93,14 +93,14 @@ namespace KnnIris
                 .ToImmutableDictionary(k => k, i => ImmutableDictionary.Create<string, int>().AddRange(
                     possibleLabels.Map(it => KeyValuePair.Create(it, 0))));
 
-            var result = expectedAndPredicted.Aggregate(seed, (acc, tuple)
-                =>
-            {
-                var current = acc[tuple.Item1][tuple.Item2];
-                return acc.SetItem(tuple.Item1, acc[tuple.Item1].SetItem(tuple.Item2, current + 1));
-            });
-
-            return result;
+            return expectedAndPredicted
+                .Aggregate(seed, (acc, tuple)
+                    =>
+                {
+                    var (expected, predicted) = tuple;
+                    var current = acc[expected][predicted];
+                    return acc.SetItem(expected, acc[expected].SetItem(predicted, current + 1));
+                });
         }
 
         public static IEnumerable<FeaturesWithLabel> CsvToFeaturesWithLabel(string csv) =>
