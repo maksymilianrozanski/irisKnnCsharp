@@ -35,10 +35,10 @@ namespace KnnIris
 
     public class Knn
     {
-        public static double EuclideanDist(List<double> first, List<double> second) =>
-            Math.Sqrt(first.Zip(second)
+        public static double EuclideanDist(IEnumerable<double> first, IEnumerable<double> second) =>
+            first.Zip(second)
                 .Select(tuple => Math.Pow(tuple.First - tuple.Second, 2))
-                .Aggregate((d, d1) => d + d1));
+                .Sum().Pipe(Math.Sqrt);
 
         public static string Predict(IEnumerable<FeaturesWithLabel> data, int kValue, List<double> predictorValues) =>
             data.Select(it => (it, EuclideanDist(it.Features, predictorValues)))
