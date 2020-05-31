@@ -24,14 +24,10 @@ namespace KnnIris
 
 
             var trainingData = trainingDataCsv
-                .Map(it => it.TrimEnd())
-                .Map(s => s.Split("\n"))
-                .Map(it => it.Map(Knn.ToFeaturesWithLabel));
+                .Map(Knn.CsvToFeaturesWithLabel);
 
             var validationData = validationDataCsv
-                .Map(it => it.TrimEnd())
-                .Map(s => s.Split("\n"))
-                .Map(it => it.Map(Knn.ToFeaturesWithLabel));
+                .Map(Knn.CsvToFeaturesWithLabel);
 
             Console.WriteLine("End");
         }
@@ -51,6 +47,9 @@ namespace KnnIris
                 .GroupBy(it => it.it.Label)
                 .OrderByDescending(it => it.Count())
                 .Select(it => it.Key).First();
+
+        public static IEnumerable<FeaturesWithLabel> CsvToFeaturesWithLabel(string csv) =>
+            csv.Trim().TrimEnd().Split("\n").Map(ToFeaturesWithLabel);
 
         public static FeaturesWithLabel ToFeaturesWithLabel(string csvRow)
         {
