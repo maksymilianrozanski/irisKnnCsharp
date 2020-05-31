@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using LaYumba.Functional;
+using LaYumba.Functional.Option;
 
 namespace KnnIris
 {
@@ -21,13 +22,32 @@ namespace KnnIris
 
             var trainingDataCsv = downloader.DownloadFromUrl(new Uri(trainingDataUrl));
             var validationDataCsv = downloader.DownloadFromUrl(new Uri(validationDataUrl));
-
-
+            
             var trainingData = trainingDataCsv
-                .Map(Knn.CsvToFeaturesWithLabel);
-
+                .Map(Knn.CsvToFeaturesWithLabel).Match(error =>
+            {
+                Console.WriteLine(error.Message);
+                Environment.Exit(1);
+                return new List<FeaturesWithLabel>();
+            }, labels => labels);
+  
             var validationData = validationDataCsv
-                .Map(Knn.CsvToFeaturesWithLabel);
+                .Map(Knn.CsvToFeaturesWithLabel).Match(error =>
+            {
+                Console.WriteLine(error.Message);
+                Environment.Exit(1);
+                return new List<FeaturesWithLabel>();
+            }, labels => labels).ToList();
+            
+            var knn3 = Knn.Predict.Apply(trainingData).Apply(3);
+
+            validationData.ForEach(it =>
+            {
+                var expected = it.Label;
+                var result = knn3(it.Features);
+                if(expected != result) Console.WriteLine("DIFFERENT!");
+                Console.WriteLine($"(expected - predicted) ({expected} - {result})");
+            });
 
             Console.WriteLine("End");
         }
@@ -40,13 +60,14 @@ namespace KnnIris
                 .Select(tuple => Math.Pow(tuple.First - tuple.Second, 2))
                 .Sum().Pipe(Math.Sqrt);
 
-        public static string Predict(IEnumerable<FeaturesWithLabel> data, int kValue, List<double> predictorValues) =>
-            data.Select(it => (it, EuclideanDist(it.Features, predictorValues)))
-                .OrderBy(it => it.Item2)
-                .Take(kValue)
-                .GroupBy(it => it.it.Label)
-                .OrderByDescending(it => it.Count())
-                .Select(it => it.Key).First();
+        public static readonly Func<IEnumerable<FeaturesWithLabel>, int, IEnumerable<double>, string> Predict =
+            (trainingData, k, predictorValues) =>
+                trainingData.Select(it => (it, EuclideanDist(it.Features, predictorValues)))
+                    .OrderBy(it => it.Item2)
+                    .Take(k)
+                    .GroupBy(it => it.it.Label)
+                    .OrderByDescending(it => it.Count())
+                    .Select(it => it.Key).First();
 
         public static IEnumerable<FeaturesWithLabel> CsvToFeaturesWithLabel(string csv) =>
             csv.Trim().TrimEnd().Split("\n").Map(ToFeaturesWithLabel);
