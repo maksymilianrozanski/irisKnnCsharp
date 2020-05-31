@@ -30,7 +30,7 @@ namespace KnnIris
                     Console.WriteLine(error.Message);
                     Environment.Exit(1);
                     return new List<FeaturesWithLabel>();
-                }, labels => labels);
+                }, labels => labels).ToList();
 
             var validationData = validationDataCsv
                 .Map(Knn.CsvToFeaturesWithLabel).Match(error =>
@@ -42,13 +42,12 @@ namespace KnnIris
 
             var knn3 = Knn.Predict.Apply(trainingData).Apply(3);
 
-            Knn.PredictAll(knn3, validationData)
-                .ForEach(it =>
-                {
-                    var (item1, item2) = it;
-                    if (item1 != item2) Console.Write("DIFFERENT !!! ");
-                    Console.WriteLine($"(expected - predicted) : ({item1} - {item2})");
-                });
+            var predictionResults = Knn.PredictAll(knn3, validationData);
+
+
+            var possibleLabels = Knn.CollectLabels(trainingData).ToList();
+            var stats = Knn.PredictionStatistics(possibleLabels, predictionResults);
+            Knn.PrintStatistics(stats);
 
             Console.WriteLine("End");
         }
@@ -102,6 +101,35 @@ namespace KnnIris
                     return acc.SetItem(expected, acc[expected].SetItem(predicted, current + 1));
                 });
         }
+
+        public static void PrintStatistics(
+            ImmutableDictionary<string, ImmutableDictionary<string, int>> predictionStatistics)
+        {
+            predictionStatistics.ForEach(it =>
+            {
+                var currentKey = it.Key;
+
+                var totalPredictedAsCurrent = it.Value.Map(i => i.Value).Sum();
+                var correctPredictionsOfCurrent = it.Value[currentKey];
+                var totalActualValuesOfCurrent = predictionStatistics.ToList()
+                    .Map(it => it.Value)
+                    .Map(it => it[currentKey])
+                    .Sum();
+                var precision = (double) correctPredictionsOfCurrent / (double) totalActualValuesOfCurrent;
+
+                Console.WriteLine("Statistics for " + currentKey);
+                Console.WriteLine($"items predicted as {currentKey}: {currentKey}");
+                Console.WriteLine("actual values:");
+                it.Value.ForEach(it => Console.WriteLine($"{it.Key} : {it.Value}"));
+                Console.WriteLine($"total {currentKey}: {totalActualValuesOfCurrent} in validation dataset");
+                Console.WriteLine($"correct predictions of {currentKey}: {correctPredictionsOfCurrent}");
+                Console.WriteLine($"Precision of {currentKey} prediction: {precision}");
+                Console.WriteLine("\n");
+            });
+        }
+
+        public static IEnumerable<string> CollectLabels(IEnumerable<FeaturesWithLabel> data) =>
+            data.GroupBy(it => it.Label).Select(it => it.Key);
 
         public static IEnumerable<FeaturesWithLabel> CsvToFeaturesWithLabel(string csv) =>
             csv.Trim().TrimEnd().Split("\n").Map(ToFeaturesWithLabel);
