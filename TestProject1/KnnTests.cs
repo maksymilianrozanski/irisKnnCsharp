@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using KnnIris;
+using LaYumba.Functional;
 using NUnit.Framework;
 
 namespace TestProject1
@@ -95,29 +96,79 @@ namespace TestProject1
         [Test]
         public void ShouldCreateStatisticsDictionary()
         {
-            var C = "cat";
-            var F = "fish";
-            var H = "hen";
-
-            var possibleLabels = new List<string> {C, F, H};
-
-            var actualValues = new List<string>
-                {C, C, C, C, C, C, F, F, F, F, F, F, F, F, F, F, H, H, H, H, H, H, H, H, H};
-            var predictedValues = new List<string>
-                {C, C, C, C, H, F, C, C, C, C, C, C, H, H, F, F, C, C, C, H, H, H, H, H, H};
-
-            var predictionResults = actualValues.Zip(predictedValues);
+            var predictionResults =
+                AnimalsData(out var c, out var f, out var h, out var possibleLabels);
 
             var result = Knn.PredictionStatistics(possibleLabels, predictionResults);
-            Assert.AreEqual(4, result[C][C], "4 of items classified as cat are cats");
-            Assert.AreEqual(1, result[C][F], "1 item classified as cat is fish");
-            Assert.AreEqual(1, result[C][H], "1 item classified as cat is a hen");
-            Assert.AreEqual(6, result[F][C], "6 of items classified as fish are cats");
-            Assert.AreEqual(2, result[F][F], "2 of items classified as fish are fish");
-            Assert.AreEqual(2, result[F][H], "2 of items classified as fish are hens");
-            Assert.AreEqual(3, result[H][C], "3 of items classified as hen are cats");
-            Assert.AreEqual(0, result[H][F], "0 of items classified as hen are fish");
-            Assert.AreEqual(6, result[H][H], "6 of items classified as hen are hens");
+            Assert.AreEqual(4, result[c][c], "4 of items classified as cat are cats");
+            Assert.AreEqual(1, result[c][f], "1 item classified as cat is fish");
+            Assert.AreEqual(1, result[c][h], "1 item classified as cat is a hen");
+            Assert.AreEqual(6, result[f][c], "6 of items classified as fish are cats");
+            Assert.AreEqual(2, result[f][f], "2 of items classified as fish are fish");
+            Assert.AreEqual(2, result[f][h], "2 of items classified as fish are hens");
+            Assert.AreEqual(3, result[h][c], "3 of items classified as hen are cats");
+            Assert.AreEqual(0, result[h][f], "0 of items classified as hen are fish");
+            Assert.AreEqual(6, result[h][h], "6 of items classified as hen are hens");
+
+            Console.Write(Knn.ExplainStatistics(result));
+        }
+
+        private static IEnumerable<(string First, string Second)> AnimalsData(out string c, out string f, out string h,
+            out List<string> possibleLabels)
+        {
+            c = "cat";
+            f = "fish";
+            h = "hen";
+
+            possibleLabels = new List<string> {c, f, h};
+
+            var actualValues = new List<string>
+                {c, c, c, c, c, c, f, f, f, f, f, f, f, f, f, f, h, h, h, h, h, h, h, h, h};
+            var predictedValues = new List<string>
+                {c, c, c, c, h, f, c, c, c, c, c, c, h, h, f, f, c, c, c, h, h, h, h, h, h};
+
+            var predictionResults = actualValues.Zip(predictedValues);
+            return predictionResults;
+        }
+
+        [Test]
+        public void ShouldReturnPredictionExplanation()
+        {
+            var predictionResults =
+                AnimalsData(out var c, out var f, out var h, out var possibleLabels);
+
+            var expected =
+                @"Statistics for cat
+items predicted as cat: 6
+actual values:
+cat : 4, fish : 1, hen : 1,
+total cat: 13 in validation dataset
+correct predictions of cat: 4
+Precision of cat prediction: 0.30769
+Recall of cat prediction: 0.66667
+
+Statistics for fish
+items predicted as fish: 10
+actual values:
+cat : 6, fish : 2, hen : 2,
+total fish: 3 in validation dataset
+correct predictions of fish: 2
+Precision of fish prediction: 0.66667
+Recall of fish prediction: 0.20000
+
+Statistics for hen
+items predicted as hen: 9
+actual values:
+cat : 3, fish : 0, hen : 6,
+total hen: 9 in validation dataset
+correct predictions of hen: 6
+Precision of hen prediction: 0.66667
+Recall of hen prediction: 0.66667
+".Replace("\r", "");
+
+            var result = Knn.PredictionStatistics(possibleLabels, predictionResults).Pipe(Knn.ExplainStatistics)
+                .Replace("\r", "");
+            Assert.AreEqual(expected, result);
         }
     }
 }

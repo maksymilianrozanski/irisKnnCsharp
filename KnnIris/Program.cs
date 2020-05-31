@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 using LaYumba.Functional;
 using LaYumba.Functional.Option;
 
@@ -44,10 +45,10 @@ namespace KnnIris
 
             var predictionResults = Knn.PredictAll(knn3, validationData);
 
-
             var possibleLabels = Knn.CollectLabels(trainingData).ToList();
-            var stats = Knn.PredictionStatistics(possibleLabels, predictionResults);
-            Knn.PrintStatistics(stats);
+            Knn.PredictionStatistics(possibleLabels, predictionResults)
+                .Pipe(Knn.ExplainStatistics)
+                .Pipe(Console.WriteLine);
 
             Console.WriteLine("End");
         }
@@ -84,12 +85,12 @@ namespace KnnIris
         /// <param name="possibleLabels">all possible labels from training dataset</param>
         /// <param name="expectedAndPredicted">tuple of labels - expected and predicted value</param>
         /// <returns>outer dictionary key (predicted value) maps to count of actual (true) values</returns>
-        public static ImmutableDictionary<string, ImmutableDictionary<string, int>> PredictionStatistics(
+        public static ImmutableSortedDictionary<string, ImmutableSortedDictionary<string, int>> PredictionStatistics(
             List<string> possibleLabels,
             IEnumerable<(string, string)> expectedAndPredicted)
         {
             var seed = possibleLabels
-                .ToImmutableDictionary(k => k, i => ImmutableDictionary.Create<string, int>().AddRange(
+                .ToImmutableSortedDictionary(k => k, i => ImmutableSortedDictionary.Create<string, int>().AddRange(
                     possibleLabels.Map(it => KeyValuePair.Create(it, 0))));
 
             return expectedAndPredicted
@@ -102,10 +103,10 @@ namespace KnnIris
                 });
         }
 
-        public static void PrintStatistics(
-            ImmutableDictionary<string, ImmutableDictionary<string, int>> predictionStatistics)
+        public static string ExplainStatistics(
+            ImmutableSortedDictionary<string, ImmutableSortedDictionary<string, int>> predictionStatistics)
         {
-            predictionStatistics.ForEach(it =>
+            return predictionStatistics.Map(it =>
             {
                 var currentKey = it.Key;
 
@@ -118,16 +119,16 @@ namespace KnnIris
                 var precision = (double) correctPredictionsOfCurrent / (double) totalActualValuesOfCurrent;
                 var recall = (double) correctPredictionsOfCurrent / (double) totalPredictedAsCurrent;
 
-                Console.WriteLine("Statistics for " + currentKey);
-                Console.WriteLine($"items predicted as {currentKey}: {currentKey}");
-                Console.WriteLine("actual values:");
-                it.Value.ForEach(it => Console.WriteLine($"{it.Key} : {it.Value}"));
-                Console.WriteLine($"total {currentKey}: {totalActualValuesOfCurrent} in validation dataset");
-                Console.WriteLine($"correct predictions of {currentKey}: {correctPredictionsOfCurrent}");
-                Console.WriteLine($"Precision of {currentKey} prediction: {precision}");
-                Console.WriteLine($"Recall of {currentKey} prediction: {recall}");
-                Console.WriteLine("\n");
-            });
+                return new StringBuilder().AppendLine($"Statistics for {currentKey}")
+                    .AppendLine($"items predicted as {currentKey}: {totalPredictedAsCurrent}")
+                    .AppendLine("actual values:")
+                    .AppendLine(it.Value.Map(it => $"{it.Key} : {it.Value},").Aggregate((s, s1) => s + " " + s1))
+                    .AppendLine($"total {currentKey}: {totalActualValuesOfCurrent} in validation dataset")
+                    .AppendLine($"correct predictions of {currentKey}: {correctPredictionsOfCurrent}")
+                    .AppendLine($"Precision of {currentKey} prediction: {precision.ToString("N5", CultureInfo.InvariantCulture)}")
+                    .AppendLine($"Recall of {currentKey} prediction: {recall.ToString("N5", CultureInfo.InvariantCulture)}")
+                    .ToString();
+            }).Aggregate((s, s1) => $"{s}\n{s1}");
         }
 
         public static IEnumerable<string> CollectLabels(IEnumerable<FeaturesWithLabel> data) =>
