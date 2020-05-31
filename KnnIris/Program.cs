@@ -116,6 +116,7 @@ namespace KnnIris
                     .Map(it => it[currentKey])
                     .Sum();
                 var precision = (double) correctPredictionsOfCurrent / (double) totalActualValuesOfCurrent;
+                var recall = (double) correctPredictionsOfCurrent / (double) totalPredictedAsCurrent;
 
                 Console.WriteLine("Statistics for " + currentKey);
                 Console.WriteLine($"items predicted as {currentKey}: {currentKey}");
@@ -124,6 +125,7 @@ namespace KnnIris
                 Console.WriteLine($"total {currentKey}: {totalActualValuesOfCurrent} in validation dataset");
                 Console.WriteLine($"correct predictions of {currentKey}: {correctPredictionsOfCurrent}");
                 Console.WriteLine($"Precision of {currentKey} prediction: {precision}");
+                Console.WriteLine($"Recall of {currentKey} prediction: {recall}");
                 Console.WriteLine("\n");
             });
         }
