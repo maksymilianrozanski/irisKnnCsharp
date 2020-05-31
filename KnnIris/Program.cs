@@ -37,15 +37,18 @@ namespace KnnIris
                     return new List<FeaturesWithLabel>();
                 }, labels => labels).ToList();
 
-            var knn3 = Knn.Predict.Apply(trainingData).Apply(3);
+            var knn = Knn.Predict.Apply(trainingData);
 
-            var predictionResults = Knn.PredictAll(knn3, validationData);
-
-            var possibleLabels = Knn.CollectLabels(trainingData).ToList();
-            Statistics.PredictionStatistics(possibleLabels, predictionResults)
-                .Pipe(Statistics.ExplainStatistics)
-                .Pipe(Console.WriteLine);
-
+            for (var k = 1; k <= 5; k++)
+            {
+                Console.WriteLine($"Values for {k} nearest neighbours");
+                var predictionResults = Knn.PredictAll(knn.Apply(k), validationData);
+                var possibleLabels = Knn.CollectLabels(trainingData).ToList();
+                Statistics.PredictionStatistics(possibleLabels, predictionResults)
+                    .Pipe(Statistics.ExplainStatistics)
+                    .Pipe(Console.WriteLine);
+            }
+            
             Console.WriteLine("End");
         }
     }
