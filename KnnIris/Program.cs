@@ -51,13 +51,11 @@ namespace KnnIris
         public static IEnumerable<FeaturesWithLabel> CsvToFeaturesWithLabel(string csv) =>
             csv.Trim().TrimEnd().Split("\n").Map(ToFeaturesWithLabel);
 
-        public static FeaturesWithLabel ToFeaturesWithLabel(string csvRow)
-        {
-            return csvRow.Split(',')
+        private static FeaturesWithLabel ToFeaturesWithLabel(string csvRow) =>
+            csvRow.Split(',')
                 .Pipe(it => (it.SkipLast(1), it.TakeLast(1).First()))
-                .Pipe(it => (it.Item1.Map(it2 => (double.Parse(it2, CultureInfo.InvariantCulture))), it.Item2))
-                .Pipe(it3 => new FeaturesWithLabel(it3.Item1.ToList(), it3.Item2));
-        }
+                .Pipe(it => (it.Item1.Map(it2 => double.Parse(it2, CultureInfo.InvariantCulture)), it.Item2))
+                .Pipe(it => new FeaturesWithLabel(it.Item1.ToList(), it.Item2));
     }
 
     public readonly struct FeaturesWithLabel
