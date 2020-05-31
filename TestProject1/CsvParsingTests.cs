@@ -20,7 +20,7 @@ namespace TestProject1
                 new FeaturesWithLabel(new List<double> {5.5, 2.3, 4.0, 1.3}, "versicolor")
             };
 
-            var result = Knn.CsvToFeaturesWithLabel(input).ToList();
+            var result = CsvParser.CsvToFeaturesWithLabel(input).ToList();
 
             Assert.AreEqual(expected.Count, result.Count);
 

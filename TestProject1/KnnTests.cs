@@ -99,7 +99,7 @@ namespace TestProject1
             var predictionResults =
                 AnimalsData(out var c, out var f, out var h, out var possibleLabels);
 
-            var result = Knn.PredictionStatistics(possibleLabels, predictionResults);
+            var result = Statistics.PredictionStatistics(possibleLabels, predictionResults);
             Assert.AreEqual(4, result[c][c], "4 of items classified as cat are cats");
             Assert.AreEqual(1, result[c][f], "1 item classified as cat is fish");
             Assert.AreEqual(1, result[c][h], "1 item classified as cat is a hen");
@@ -110,7 +110,7 @@ namespace TestProject1
             Assert.AreEqual(0, result[h][f], "0 of items classified as hen are fish");
             Assert.AreEqual(6, result[h][h], "6 of items classified as hen are hens");
 
-            Console.Write(Knn.ExplainStatistics(result));
+            Console.Write(Statistics.ExplainStatistics(result));
         }
 
         private static IEnumerable<(string First, string Second)> AnimalsData(out string c, out string f, out string h,
@@ -166,7 +166,7 @@ Precision of hen prediction: 0.66667
 Recall of hen prediction: 0.66667
 ".Replace("\r", "");
 
-            var result = Knn.PredictionStatistics(possibleLabels, predictionResults).Pipe(Knn.ExplainStatistics)
+            var result = Statistics.PredictionStatistics(possibleLabels, predictionResults).Pipe(Statistics.ExplainStatistics)
                 .Replace("\r", "");
             Assert.AreEqual(expected, result);
         }
