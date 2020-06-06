@@ -20,6 +20,8 @@ namespace KnnIris
                 "https://gist.githubusercontent.com/maksymilianrozanski/3b631b25cccc2baa2731956aaecc7716/raw/1d62a26bdeaf91fe4dcaf56d1fa96de13ab75e5a/irisValidationData";
 
             var trainingDataUrl = Console.ReadLine();
+            
+            Console.WriteLine("Enter url to validation data (or leave blank to use default dataset)");
             var validationDataUrl = Console.ReadLine();
 
             Console.WriteLine(
