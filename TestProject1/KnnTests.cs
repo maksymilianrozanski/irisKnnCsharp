@@ -63,7 +63,8 @@ namespace TestProject1
 
             for (var k = 1; k <= 3; k++)
             {
-                foreach (var result in expectedRed.Select(predicted => Knn.Predict(_trainingData, k, predicted)))
+                foreach (var result in expectedRed.Select(predicted =>
+                    Knn.Predict(Knn.EuclideanDist, _trainingData, k, predicted)))
                 {
                     Assert.AreEqual(R, result);
                 }
@@ -82,7 +83,8 @@ namespace TestProject1
 
             for (var k = 1; k <= 3; k++)
             {
-                foreach (var result in expectedGreen.Select(predicted => Knn.Predict(_trainingData, k, predicted)))
+                foreach (var result in expectedGreen.Select(predicted =>
+                    Knn.Predict(Knn.ManhattanDist, _trainingData, k, predicted)))
                 {
                     Assert.AreEqual(G, result);
                 }
@@ -166,7 +168,8 @@ Precision of hen prediction: 0.66667
 Recall of hen prediction: 0.66667
 ".Replace("\r", "");
 
-            var result = Statistics.PredictionStatistics(possibleLabels, predictionResults).Pipe(Statistics.ExplainStatistics)
+            var result = Statistics.PredictionStatistics(possibleLabels, predictionResults)
+                .Pipe(Statistics.ExplainStatistics)
                 .Replace("\r", "");
             Assert.AreEqual(expected, result);
         }

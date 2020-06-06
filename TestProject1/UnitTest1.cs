@@ -45,6 +45,22 @@ namespace TestProject1
         }
 
         [Test]
+        public void ShouldReturnExpectedManhattanDistance()
+        {
+            var first = new List<double> {0, 0};
+            var second = new List<double> {10, 10};
+            var third = new List<double> {10, -10};
+            var fourth = new List<double> {-10, 10};
+            var fifth = new List<double> {-10, -10};
+
+            var expected = 20.0;
+            Assert.AreEqual(expected, Knn.ManhattanDist(first, second), 0.1);
+            Assert.AreEqual(expected, Knn.ManhattanDist(first, third), 0.1);
+            Assert.AreEqual(expected, Knn.ManhattanDist(first, fourth), 0.1);
+            Assert.AreEqual(expected, Knn.ManhattanDist(first, fifth), 0.1);
+        }
+
+        [Test]
         public void ShouldReturnZeroForTheSamePointTwice()
         {
             var point = new List<double> {3, 4, 5};

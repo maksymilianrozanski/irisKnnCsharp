@@ -10,14 +10,22 @@ namespace KnnIris
 {
     public class Knn
     {
-        public static double EuclideanDist(IEnumerable<double> first, IEnumerable<double> second) =>
+        public static Func<IEnumerable<double>, IEnumerable<double>, double> EuclideanDist => (first, second) =>
             first.Zip(second)
                 .Select(tuple => Math.Pow(tuple.First - tuple.Second, 2))
                 .Sum().Pipe(Math.Sqrt);
 
-        public static readonly Func<IEnumerable<FeaturesWithLabel>, int, IEnumerable<double>, string> Predict =
-            (trainingData, k, predictorValues) =>
-                trainingData.Select(it => (it, EuclideanDist(it.Features, predictorValues)))
+        public static Func<IEnumerable<double>, IEnumerable<double>, double> ManhattanDist => (first, second) =>
+            first.Zip(second)
+                .Select(tuple => Math.Abs(tuple.First - tuple.Second))
+                .Sum();
+
+        public static readonly Func<
+            Func<IEnumerable<double>, IEnumerable<double>, double>,
+            IEnumerable<FeaturesWithLabel>, int, IEnumerable<double>,
+            string> Predict =
+            (distanceFunc, trainingData, k, predictorValues) =>
+                trainingData.Select(it => (it, distanceFunc(it.Features, predictorValues)))
                     .OrderBy(it => it.Item2)
                     .Take(k)
                     .GroupBy(it => it.it.Label)
